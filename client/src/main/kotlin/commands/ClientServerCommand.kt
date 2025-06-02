@@ -1,11 +1,12 @@
 package client.commands
 
+import client.State
+import client.ui.OutputManager
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import network.NetworkManager
 import shared.network.commands.Request
-import shared.network.responses.Response
 import ui.InputManager
 
 class ClientServerCommand(
@@ -13,7 +14,9 @@ class ClientServerCommand(
     override val description: String,
     private val argType: Pair<String?, String?>
 ) : Command {
-    override fun execute(args: List<String?>): Response? {
+    override fun execute(args: List<String?>) {
+        NetworkManager.sendRequest(Request("PING"))
+        if (!State.connectedToServer) return
         val json = Json { ignoreUnknownKeys = true}
         val data: Any?
         val params: MutableMap<String, JsonElement> = mutableMapOf()
@@ -28,8 +31,10 @@ class ClientServerCommand(
                 params["key"] = json.encodeToJsonElement(key)
             }
         }
-        if (!compareTypes(key?.javaClass?.typeName, argType.first))
-            return Response(false, "Неверный тип ключа")
+        if (!compareTypes(key?.javaClass?.typeName, argType.first)) {
+            OutputManager.println("Неверный тип ключа")
+            return
+        }
         when (argType.second) {
             "Person" -> {
                 data = InputManager.readPerson(setOf())
@@ -48,17 +53,22 @@ class ClientServerCommand(
                 } else data = null
             }
         }
-        if (!compareTypes(data?.javaClass?.typeName, argType.second))
-            return Response(false, "Неверный тип данных")
+        if (!compareTypes(data?.javaClass?.typeName, argType.second)) {
+            OutputManager.printError("Неверный тип данных")
+            return
+        }
 
-        return NetworkManager.sendRequest(Request(
+        val response = NetworkManager.sendRequest(Request(
             name,
             params
         ))
+        if (response != null) {
+            if (name == "exit") State.isRunning = false
+            OutputManager.println(response.message)
+        } else OutputManager.printError("Нет результата")
     }
 
     private fun compareTypes(provided: String?, required: String?): Boolean {
-        println("$provided -- $required")
         return when (provided) {
             null -> required == null
             else -> provided.contains(required.toString())

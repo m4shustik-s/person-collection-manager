@@ -1,13 +1,15 @@
 package client.commands
 
-import shared.network.responses.Response
+import client.State
+import client.ui.OutputManager
 
 class ClientExitCommand : Command {
     override val name = "exit"
     override val description = "завершить программу"
 
-    override fun execute(args: List<String?>): Response {
-        return Response(true, "Завершение работы клиента")
+    override fun execute(args: List<String?>) {
+        State.isRunning = false
+        OutputManager.println("Завершение работы клиента")
     }
 }
 

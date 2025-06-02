@@ -1,7 +1,7 @@
 package client.commands
 
 import client.invoker.Invoker
-import shared.network.responses.Response
+import client.ui.OutputManager
 import java.io.File
 
 class ClientExecuteScriptCommand : Command {
@@ -10,12 +10,21 @@ class ClientExecuteScriptCommand : Command {
     override val name = "execute_script"
     override val description = "выполнить команды из файла"
 
-    override fun execute(args: List<String?>): Response {
-        if (args.isEmpty() || args[0] == null) return Response(false, "Не указано имя файла")
+    override fun execute(args: List<String?>) {
+        if (args.isEmpty() || args[0] == null) {
+            OutputManager.println("Не указано имя файла")
+            return
+        }
         val filename = args[0]!!
-        if (executedScripts.contains(filename)) return Response(false, "Рекурсивный вызов скрипта запрещён")
+        if (executedScripts.contains(filename)) {
+            OutputManager.println("Рекурсивный вызов скрипта запрещён")
+            return
+        }
         val file = File(filename).canonicalFile
-        if (!file.exists() || !file.canRead()) return Response(false, "Файл недоступен")
+        if (!file.exists() || !file.canRead()) {
+            OutputManager.println("Файл недоступен")
+            return
+        }
 
         executedScripts.add(filename)
         file.forEachLine { line ->
@@ -27,6 +36,7 @@ class ClientExecuteScriptCommand : Command {
             Invoker.executeCommand(commandName, listOf(commandArgs))
         }
         executedScripts.remove(filename)
-        return Response(true, "Выполнение скрипта завершено")
+        OutputManager.println("Выполнение скрипта завершено")
+        return
     }
 }

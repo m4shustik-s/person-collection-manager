@@ -1,10 +1,14 @@
 package ui
 
+import client.State
+import client.invoker.Invoker
 import client.ui.OutputManager
+import network.NetworkManager
 import shared.data.Person
 import shared.data.Coordinates
 import shared.data.Country
 import shared.data.Location
+import shared.network.commands.Request
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.time.LocalDateTime
@@ -105,6 +109,24 @@ object InputManager {
                 return Country.valueOf(input.uppercase())
             } catch (e: IllegalArgumentException) {
                 OutputManager.printError("Invalid nationality. Please choose from the available options.")
+            }
+        }
+    }
+
+    fun needToReconnect() {
+        while (!State.connectedToServer) {
+            OutputManager.println("Соединение разорвано, переподключиться? (Y/n): ")
+            OutputManager.print("> ")
+            val input = readlnOrNull()
+            when (input?.trim()) {
+                "Y" -> {
+                    NetworkManager.sendRequest(Request("PING"))
+                    break
+                }
+                "n" -> {
+                    Invoker.executeCommand("exit", listOf())
+                    break
+                }
             }
         }
     }

@@ -1,20 +1,23 @@
 package client
 
 import client.invoker.Invoker
+import client.ui.OutputManager
 import network.NetworkManager
+import shared.network.commands.Request
 import java.util.*
 
 object State {
-    var isRunning = true
+    var isRunning = false
+    var connectedToServer = false
 }
 
 fun main() {
     val scanner = Scanner(System.`in`)
     println("Клиент запущен. Введите команду (help для списка):")
-
-    NetworkManager.loadCommands()
+    State.isRunning = true
+    NetworkManager.sendRequest(Request("PING"))
     while (State.isRunning) {
-        print("> ")
+        OutputManager.print("> ")
         val line = scanner.nextLine().trim()
         if (line.isEmpty()) continue
 

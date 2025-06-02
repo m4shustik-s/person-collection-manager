@@ -1,6 +1,5 @@
 package client.invoker
 
-import client.State
 import client.commands.ClientExecuteScriptCommand
 import client.commands.ClientExitCommand
 import client.commands.ClientHelpCommand
@@ -30,12 +29,7 @@ object Invoker {
         }
 
         try {
-            val response = command.execute(args)?.message
-            if (response != null) {
-                if (commandName == "exit") State.isRunning = false
-                OutputManager.println(response)
-            }
-            else OutputManager.printError("Нет результата")
+            command.execute(args)
         } catch (e: Exception) {
             OutputManager.printError("Ошибка выполнения команды: ${e.message}")
         }

@@ -22,6 +22,18 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
 }
 
+tasks.withType<Jar> {
+    manifest {
+        attributes["Main-Class"] = "client.ClientKt"
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from(sourceSets.main.get().output)
+    dependsOn(configurations.runtimeClasspath)
+    from({
+        configurations.runtimeClasspath.get().filter { it.name.endsWith("jar") }.map { zipTree(it)}
+    })
+}
+
 tasks.test {
     useJUnitPlatform()
 }
