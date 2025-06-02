@@ -3,9 +3,6 @@ package server.network
 import invoker.Invoker
 import java.net.SocketException
 import kotlinx.serialization.json.*
-import server.collection.PersonCollectionManager
-import shared.data.Location
-import shared.data.Person
 import shared.network.commands.Request
 import shared.network.responses.Response
 import shared.utils.Serialization
@@ -117,54 +114,6 @@ class Server(private val port: Int) {
             args = listOf(key, request.args["data"])
         )
         return res
-//        return when (request.command.lowercase()) {
-//
-//            "show" -> {
-//                val all = PersonCollectionManager.getAll()
-//                val data = Json.encodeToJsonElement(all)
-//                Response(true, "Коллекция:", data)
-//            }
-//
-//            "insert" -> {
-//                val keyElement = request.args["key"]
-//                val key = keyElement?.jsonPrimitive?.contentOrNull
-//                val person = parsePersonFromArgs(request.args["person"])
-//                if (key == null) return Response(false, "Ошибка: не передан ключ")
-//                if (person == null) return Response(false, "Ошибка: не передан или неверен объект Person")
-//
-//                val success = PersonCollectionManager.addPerson(key, person)
-//                if (success) Response(true, "Person добавлен с ключом $key")
-//                else Response(false, "Person с таким ключом или passportID уже существует")
-//            }
-//
-//            "update" -> {
-//                val idElement = request.args["id"]
-//                val id = idElement?.jsonPrimitive?.intOrNull
-//                val person = parsePersonFromArgs(request.args["person"])
-//                if (id == null || person == null) {
-//                    return Response(false, "Ошибка: неверные аргументы для update")
-//                }
-//                val success = PersonCollectionManager.updatePerson(id, person)
-//                if (success) Response(true, "Person обновлён")
-//                else Response(false, "Person с таким id не найден")
-//            }
-//
-//            "remove_key" -> {
-//                val keyElement = request.args["key"]
-//                val key = keyElement?.jsonPrimitive?.contentOrNull
-//                if (key == null) return Response(false, "Ошибка: не указан ключ")
-//                val removed = PersonCollectionManager.removePerson(key)
-//                if (removed != null) Response(true, "Person с ключом $key удалён")
-//                else Response(false, "Person с таким ключом не найден")
-//            }
-//
-//            "clear" -> {
-//                collectionManager.clearCollection()
-//                Response(true, "Коллекция очищена")
-//            }
-//
-//            else -> Response(false, "Неизвестная команда: ${request.command}")
-//        }
     }
 
 }

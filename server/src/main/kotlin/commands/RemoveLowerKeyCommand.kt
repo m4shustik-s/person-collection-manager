@@ -12,5 +12,5 @@ class RemoveLowerKeyCommand : ServerCommand {
     }
     override val name: String = "remove_lower_key"
     override val description: String = "удалить элементы с ключами меньше заданного"
-    override val argType: Pair<String?, String?> = Pair(null, "Person")
+    override val argType: Pair<String?, String?> = Pair("String", null)
 }

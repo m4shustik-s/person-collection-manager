@@ -6,10 +6,18 @@ object Invoker {
     private val commands = mutableMapOf<String, ServerCommand>()
 
     init {
+        registerCommand(CountLessThanLocationCommand())
+        registerCommand(FilterByHeightCommand())
         registerCommand(InfoCommand())
         registerCommand(InsertCommand())
         registerCommand(LoadCommandsCommand())
+        registerCommand(PrintFieldDescendingPassportIDCommand())
+        registerCommand(RemoveGreaterCommand())
+        registerCommand(RemoveKeyCommand())
+        registerCommand(RemoveLowerKeyCommand())
+        registerCommand(ReplaceIfLowerCommand())
         registerCommand(ShowCommand())
+        registerCommand(UpdateCommand())
     }
 
     fun registerCommand(command: ServerCommand) {

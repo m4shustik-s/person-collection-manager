@@ -2,5 +2,5 @@ insert lol
 show
 update lol
 show
-remove lol
+remove_key lol
 show

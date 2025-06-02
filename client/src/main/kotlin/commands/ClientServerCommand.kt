@@ -15,40 +15,50 @@ class ClientServerCommand(
 ) : Command {
     override fun execute(args: List<String?>): Response? {
         val json = Json { ignoreUnknownKeys = true}
-        val params: Map<String, JsonElement>
-        var keyType: String? = null
-        var dataType: String? = null
-        when (name) {
-            "insert", "update" -> {
-                params = mapOf(
-                    "key" to json.encodeToJsonElement(args[0]),
-                    "data" to json.encodeToJsonElement(InputManager.readPerson(setOf()))
-                )
-                keyType = "String"
-                dataType = "Person"
+        val data: Any?
+        val params: MutableMap<String, JsonElement> = mutableMapOf()
+        var key: Any? = null
+        when (argType.first) {
+            "String" -> {
+                key = args[0]
+                params["key"] = json.encodeToJsonElement(key)
+            }
+            "Int" -> {
+                key = args[0]?.toInt()
+                params["key"] = json.encodeToJsonElement(key)
+            }
+        }
+        if (!compareTypes(key?.javaClass?.typeName, argType.first))
+            return Response(false, "Неверный тип ключа")
+        when (argType.second) {
+            "Person" -> {
+                data = InputManager.readPerson(setOf())
+                params["data"] = json.encodeToJsonElement(data)
             }
 
-            "count_less_than_location" -> {
-                params = mapOf("data" to json.encodeToJsonElement(InputManager.readLocation()))
-                dataType = "Location"
+            "Location" -> {
+                data = InputManager.readLocation()
+                params["data"] = json.encodeToJsonElement(data)
             }
 
             else -> {
-                params = mapOf("key" to json.encodeToJsonElement(args[0]))
-                keyType = if (args[0] != null) "String" else null
+                if (key == null) {
+                    data = args[0]
+                    params["data"] = json.encodeToJsonElement(data)
+                } else data = null
             }
         }
-        return if (compareTypes(keyType, argType.first) && compareTypes(dataType, argType.second)) {
-            NetworkManager.sendRequest(Request(
-                name,
-                params
-            ))
-        } else {
-            null
-        }
+        if (!compareTypes(data?.javaClass?.typeName, argType.second))
+            return Response(false, "Неверный тип данных")
+
+        return NetworkManager.sendRequest(Request(
+            name,
+            params
+        ))
     }
 
     private fun compareTypes(provided: String?, required: String?): Boolean {
+        println("$provided -- $required")
         return when (provided) {
             null -> required == null
             else -> provided.contains(required.toString())
