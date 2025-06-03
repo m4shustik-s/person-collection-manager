@@ -4,7 +4,6 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.decodeFromJsonElement
 import server.collection.PersonCollectionManager
 import shared.data.Person
-import shared.network.commands.ReplaceIfLowerRequest
 import shared.network.responses.Response
 
 class ReplaceIfLowerCommand : ServerCommand {
