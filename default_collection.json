@@ -1,0 +1,33 @@
+{
+  "4": {
+    "id": 1,
+    "name": "test",
+    "coordinates": {
+      "x": 4,
+      "y": 4.0
+    },
+    "creationDate": "2025-06-02T21:08:54.4372537",
+    "height": 4.0,
+    "weight": 4.0,
+    "passportID": "4",
+    "nationality": "CHINA",
+    "location": {
+      "x": 4,
+      "y": 4.0,
+      "z": 4.0
+    }
+  },
+  "54": {
+    "id": 2,
+    "name": "hvon",
+    "coordinates": {
+      "x": 54,
+      "y": 24.0
+    },
+    "creationDate": "2025-06-02T21:10:28.8740171",
+    "height": 4.0,
+    "weight": 4.0,
+    "passportID": "2",
+    "nationality": "ITALY"
+  }
+}

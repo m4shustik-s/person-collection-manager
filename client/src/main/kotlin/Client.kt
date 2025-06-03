@@ -13,7 +13,7 @@ object State {
 
 fun main() {
     val scanner = Scanner(System.`in`)
-    println("Клиент запущен. Введите команду (help для списка):")
+    OutputManager.println("Клиент запущен. Введите команду (help для списка):")
     State.isRunning = true
     NetworkManager.sendRequest(Request("PING"))
     while (State.isRunning) {

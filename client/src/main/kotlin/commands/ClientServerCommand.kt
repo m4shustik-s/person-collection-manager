@@ -62,10 +62,8 @@ class ClientServerCommand(
             name,
             params
         ))
-        if (response != null) {
-            if (name == "exit") State.isRunning = false
-            OutputManager.println(response.message)
-        } else OutputManager.printError("Нет результата")
+        if (response != null) OutputManager.println(response.message)
+        else OutputManager.printError("Нет результата")
     }
 
     private fun compareTypes(provided: String?, required: String?): Boolean {

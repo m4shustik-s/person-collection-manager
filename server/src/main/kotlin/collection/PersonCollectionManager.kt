@@ -1,14 +1,16 @@
 package server.collection
 
+import server.utils.FileManager
 import shared.data.Location
 import shared.data.Person
+import java.nio.file.Paths
 import java.util.concurrent.ConcurrentHashMap
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 object PersonCollectionManager {
     private val collection = ConcurrentHashMap<String, Person>()
-
+    private var currentFilePath: String? = null
     private val initializationDate: LocalDateTime = LocalDateTime.now()
 
     fun addPerson(key: String, person: Person): Boolean {
@@ -70,7 +72,7 @@ object PersonCollectionManager {
     }
 
     fun countLessThanLocation(location: Location): Int {
-        return collection.values.count { it.location != null && it.location!! < location }
+        return collection.values.count { it.location != null && it.location < location }
     }
 
     fun filterByHeight(height: Double): Map<String, Person> {
@@ -79,5 +81,34 @@ object PersonCollectionManager {
 
     fun getPassportIDsDescending(): List<String> {
         return collection.values.map { it.passportID }.sortedDescending()
+    }
+
+    fun saveCollection(): Boolean {
+        return currentFilePath?.let { filePath ->
+            FileManager.writeCollection(filePath, collection.toMap()) // Явное преобразование
+        } ?: false
+    }
+
+    fun loadCollection(filePath: String): Boolean {
+        return try {
+            val normalizedPath = Paths.get(filePath).normalize().toString()
+            val data = FileManager.readCollection(normalizedPath) ?: return false
+
+            collection.clear()
+            Person.generateId(data.keys)
+            data.forEach { (key, person) -> collection[key.toString()] = person }
+            currentFilePath = normalizedPath
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    fun getCurrentFile(): String? {
+        return currentFilePath
+    }
+
+    fun setCurrentFile(filePath: String) {
+        currentFilePath = filePath
     }
 }

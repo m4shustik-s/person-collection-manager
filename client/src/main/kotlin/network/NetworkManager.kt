@@ -16,13 +16,13 @@ import java.nio.channels.SocketChannel
 
 object NetworkManager {
 
-    private val host = "localhost"
-    private val port = 8888
+    private const val HOST = "localhost"
+    private const val PORT = 8888
 
     fun sendRequest(request: Request): Response? {
         try {
-            SocketChannel.open(InetSocketAddress(host, port)).use { channel ->
-                channel.configureBlocking(true)
+            SocketChannel.open(InetSocketAddress(HOST, PORT)).use { channel ->
+                channel.configureBlocking(false)
                 val requestJson = Serialization.encodeToString(request)
                 val requestBytes = requestJson.encodeToByteArray()
                 val lengthBuffer = ByteBuffer.allocate(4)
@@ -69,8 +69,8 @@ object NetworkManager {
     }
 
     private fun loadCommands() {
-        SocketChannel.open(InetSocketAddress(host, port)).use { channel ->
-            channel.configureBlocking(true)
+        SocketChannel.open(InetSocketAddress(HOST, PORT)).use { channel ->
+            channel.configureBlocking(false)
             val requestJson = Serialization.encodeToString(Request(
                 "load_commands",
             ))
@@ -84,8 +84,8 @@ object NetworkManager {
             val lengthResponseBuffer = ByteBuffer.allocate(4)
             readFully(channel, lengthResponseBuffer)
             lengthResponseBuffer.flip()
-            val responseLength = lengthResponseBuffer.int
 
+            val responseLength = lengthResponseBuffer.int
             val responseBuffer = ByteBuffer.allocate(responseLength)
             readFully(channel, responseBuffer)
             responseBuffer.flip()

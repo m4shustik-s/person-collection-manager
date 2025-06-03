@@ -10,7 +10,7 @@ class LoadCommandsCommand : ServerCommand {
         val json = Json { ignoreUnknownKeys }
         val commands = Invoker.getCommands().values.map { command ->
              Triple(command.name, command.description, command.argType)
-        }.filter { command -> command.first != "load_commands" }
+        }.filter { command -> command.first != "load_commands" && command.first != "save"}
         return Response(
             true,
             "Список команд",

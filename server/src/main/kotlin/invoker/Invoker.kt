@@ -16,11 +16,12 @@ object Invoker {
         registerCommand(RemoveKeyCommand())
         registerCommand(RemoveLowerKeyCommand())
         registerCommand(ReplaceIfLowerCommand())
+        registerCommand(SaveCommand())
         registerCommand(ShowCommand())
         registerCommand(UpdateCommand())
     }
 
-    fun registerCommand(command: ServerCommand) {
+    private fun registerCommand(command: ServerCommand) {
         commands[command.name] = command
     }
 
