@@ -3,7 +3,6 @@ package server.collection
 import server.entities.PersonEntity
 import server.entities.UserEntity
 import server.shared.data.User
-import server.utils.OutputManager
 import shared.data.Location
 import shared.data.Person
 import java.util.concurrent.ConcurrentHashMap
@@ -45,7 +44,7 @@ object PersonCollectionManager {
                 "Дата инициализации: $formattedDate"
     }
 
-    fun getAll(): Collection<Person> = collection.values
+    fun getAll(): ConcurrentHashMap<String, Person> = collection
     fun getAllUsers(): CopyOnWriteArrayList<User> = users
 
     fun removeGreater(person: Person): List<Person> {

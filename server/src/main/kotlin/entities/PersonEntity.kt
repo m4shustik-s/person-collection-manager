@@ -22,7 +22,7 @@ object PersonEntity : Entity<Person> {
                     name,
                     coordinates_x,
                     coordinates_y,
-                    creation_data,
+                    creation_date,
                     height,
                     weight,
                     passport_id,
@@ -30,7 +30,7 @@ object PersonEntity : Entity<Person> {
                     location_x,
                     location_y,
                     location_z,
-                    user_id,
+                    user_id
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id""".trimIndent()
         )
         fillPlaceholders(stmt, key, entity, userId)
@@ -53,7 +53,7 @@ object PersonEntity : Entity<Person> {
                     name = ?,
                     coordinates_x = ?,
                     coordinates_y = ?,
-                    creation_data = ?,
+                    creation_date = ?,
                     height = ?,
                     weight = ?,
                     passport_id = ?,

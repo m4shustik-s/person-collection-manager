@@ -36,7 +36,7 @@ object DatabaseManager {
                     name VARCHAR(100) NOT NULL,
                     coordinates_x BIGINT NOT NULL,
                     coordinates_y REAL NOT NULL,
-                    creation_data VARCHAR(10) NOT NULL,
+                    creation_date VARCHAR(100) NOT NULL,
                     height DOUBLE PRECISION,
                     weight DOUBLE PRECISION,
                     passport_id VARCHAR(100) NOT NULL,

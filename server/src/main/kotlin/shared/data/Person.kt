@@ -26,7 +26,7 @@ data class Person(
     override fun compareTo(other: Person): Int = id.compareTo(other.id)
 
     override fun toString(): String {
-        return """Person(
+        return """
             |  id: $id,
             |  name: '$name',
             |  coordinates: $coordinates,
@@ -36,7 +36,7 @@ data class Person(
             |  passportID: '$passportID',
             |  nationality: $nationality,
             |  location: ${location ?: "null"}
-            |)""".trimMargin()
+            |""".trimMargin()
     }
 
     companion object {
