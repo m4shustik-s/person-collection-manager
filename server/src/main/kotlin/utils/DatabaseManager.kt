@@ -2,7 +2,6 @@ package server.utils
 
 import server.State
 import shared.data.Country
-import shared.network.responses.Response
 import java.sql.Connection
 import java.sql.DriverManager
 

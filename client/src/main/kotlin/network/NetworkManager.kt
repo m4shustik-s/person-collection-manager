@@ -17,13 +17,11 @@ import java.nio.ByteBuffer
 import java.nio.channels.SocketChannel
 
 object NetworkManager {
-
-    private const val HOST = "localhost"
     private const val PORT = 8888
 
     fun sendRequest(request: Request): Response? {
         try {
-            SocketChannel.open(InetSocketAddress(HOST, PORT)).use { channel ->
+            SocketChannel.open(InetSocketAddress(State.host, PORT)).use { channel ->
                 channel.configureBlocking(false)
                 val requestJson = Serialization.encodeToString(request)
                 val requestBytes = requestJson.encodeToByteArray()
@@ -51,7 +49,6 @@ object NetworkManager {
 
                 // Десериализуем JSON в объект Response
                 val response = Serialization.decodeFromString<Response>(responseString)
-                println(response)
                 return response
             }
         } catch (e: Exception) {

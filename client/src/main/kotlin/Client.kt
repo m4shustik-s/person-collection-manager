@@ -3,12 +3,11 @@ package client
 import client.invoker.Invoker
 import client.ui.OutputManager
 import kotlinx.serialization.json.Json
-import network.NetworkManager
-import shared.network.commands.Request
 import ui.InputManager
 import java.util.*
 
 object State {
+    var host: String? = null
     val json = Json { ignoreUnknownKeys = true }
     var isRunning = false
     var isAuthorized = false
@@ -20,6 +19,7 @@ object State {
 fun main() {
     val scanner = Scanner(System.`in`)
     State.isRunning = true
+    InputManager.getServerAddress()
     OutputManager.println("Клиент запущен. Авторизуйтесь в системе")
     InputManager.getAuthCredentials()
     while (State.isRunning) {

@@ -8,7 +8,6 @@ import shared.data.Person
 import shared.data.Coordinates
 import shared.data.Country
 import shared.data.Location
-import shared.network.commands.Request
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.time.LocalDateTime
@@ -148,6 +147,36 @@ object InputManager {
             }
         }
         NetworkManager.healthCheck()
+    }
+
+    /**
+     * Get IPv4 address of server from user
+     */
+    fun getServerAddress() {
+        while (State.host == null) {
+            OutputManager.println("Specify server ipv4 address:")
+            OutputManager.print("> ")
+            val input = readln()
+            if (isValidIPv4(input)) State.host = input
+            else OutputManager.printError("Incorrect IPv4 address.")
+        }
+    }
+
+    /**
+     * Checks if provided IP is valid for IPv4
+     * @return true, if ip is valid, false otherwise
+     */
+    private fun isValidIPv4(ip: String): Boolean {
+        val parts = ip.split(".")
+        if (ip.trim() == "localhost") return true
+        if (parts.size != 4) return false
+        for (part in parts) {
+            if (part.isEmpty() || part.length > 3) return false
+            if (part.length > 1 && part.startsWith('0')) return false
+            val num = part.toIntOrNull() ?: return false
+            if (num !in 0..255) return false
+        }
+        return true
     }
 
     fun readLocation(): Location? {

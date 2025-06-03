@@ -49,7 +49,7 @@ object PersonCollectionManager {
     fun getAllUsers(): CopyOnWriteArrayList<User> = users
 
     fun removeGreater(person: Person, userId: Int): List<Person> {
-        val toRemove = collection.filterValues { it > person }.keys
+        val toRemove = collection.filterValues { it < person }.keys
         val removed = mutableListOf<Person>()
         for (key in toRemove) {
             val el = collection[key]
