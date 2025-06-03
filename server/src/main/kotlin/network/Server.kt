@@ -12,10 +12,16 @@ import shared.utils.Serialization
 import java.io.*
 import java.net.ServerSocket
 import java.net.Socket
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.ForkJoinPool
 
 class Server(private val port: Int) {
+    private val requestPool = ForkJoinPool()
+    private val responsePool: ExecutorService = Executors.newCachedThreadPool()
 
     fun start() {
+
         ServerSocket(port).use { serverSocket ->
             OutputManager.println("Server started on port $port")
             while (State.isRunning) {
@@ -26,16 +32,12 @@ class Server(private val port: Int) {
                     }
 
                     OutputManager.println("New client connected: ${clientSocket.inetAddress.hostAddress}")
-                    try {
-                        handleClient(clientSocket)
-                    } catch (e: Exception) {
-                        OutputManager.println("Error handling client: ${e.message}")
-                    } finally {
+
+                    requestPool.execute {
                         try {
-                            clientSocket.close()
-                            OutputManager.println("Client connection closed")
-                        } catch (e: IOException) {
-                            OutputManager.println("Error closing socket: ${e.message}")
+                            handleClient(clientSocket)
+                        } catch (e: Exception) {
+                            OutputManager.println("Error handling client: ${e.message}")
                         }
                     }
                 } catch (e: IOException) {
@@ -47,53 +49,35 @@ class Server(private val port: Int) {
 
 
     private fun handleClient(clientSocket: Socket) {
+        val input = DataInputStream(clientSocket.getInputStream())
+
         try {
-            val input = DataInputStream(clientSocket.getInputStream())
-            val output = DataOutputStream(clientSocket.getOutputStream())
-
-            while (!clientSocket.isClosed) {
-                try {
-                    // Читаем длину сообщения
-                    val length = try {
-                        input.readInt()
-                    } catch (e: EOFException) {
-                        OutputManager.println("Client disconnected (graceful close)")
-                        break
-                    }
-
-                    // Читаем данные
-                    val bytes = ByteArray(length)
-                    input.readFully(bytes)
-                    val requestJson = bytes.decodeToString()
-                    val request = Serialization.decodeFromString<Request>(requestJson)
-                    val response = if (request?.command == "PING") {
-                        Response(true, "PONG")
-                    } else {
-                        request?.let { handleRequest(it) }
-                    }
-
-                    // Отправляем ответ
-                    val responseBytes = Serialization.encodeToString(response).toByteArray()
-                    output.writeInt(responseBytes.size)
-                    output.write(responseBytes)
-                    output.flush()
-                    clientSocket.close()
-
-                } catch (e: SocketException) {
-                    OutputManager.println("Socket error (client force-closed?): ${e.message}")
-                    break
-                } catch (e: IOException) {
-                    OutputManager.println("IO error: ${e.message}")
-                    break
-                }
-            }
-        } finally {
-            try {
+            // Читаем длину сообщения
+            val length = try {
+                input.readInt()
+            } catch (e: EOFException) {
+                OutputManager.println("Client disconnected (graceful close)")
                 clientSocket.close()
-                OutputManager.println("Connection closed")
-            } catch (e: IOException) {
-                OutputManager.println("Error closing socket: ${e.message}")
+                return
             }
+
+            // Читаем данные
+            val bytes = ByteArray(length)
+            input.readFully(bytes)
+            val requestJson = bytes.decodeToString()
+            val request = Serialization.decodeFromString<Request>(requestJson)
+            val response = if (request?.command == "PING") {
+                Response(true, "PONG")
+            } else {
+                request?.let { handleRequest(it) }
+            }
+            responsePool.submit {
+                handleResponse(clientSocket, response)
+            }
+        } catch (e: SocketException) {
+            OutputManager.println("Socket error (client force-closed?): ${e.message}")
+        } catch (e: IOException) {
+            OutputManager.println("Error closing socket: ${e.message}")
         }
     }
 
@@ -111,4 +95,23 @@ class Server(private val port: Int) {
         return res
     }
 
+    private fun handleResponse(clientSocket: Socket, response: Response?) {
+        try {
+            val output = DataOutputStream(clientSocket.getOutputStream())
+            val responseBytes = Serialization.encodeToString(response).toByteArray()
+            output.writeInt(responseBytes.size)
+            output.write(responseBytes)
+            output.flush()
+        } catch (e: IOException) {
+            OutputManager.println("Error sending response: ${e.message}")
+        } finally {
+            try {
+                println("kek")
+                clientSocket.close()
+                OutputManager.println("Connection closed")
+            } catch (e: IOException) {
+                OutputManager.println("Error closing socket: ${e.message}")
+            }
+        }
+    }
 }

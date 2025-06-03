@@ -51,6 +51,7 @@ object NetworkManager {
 
                 // Десериализуем JSON в объект Response
                 val response = Serialization.decodeFromString<Response>(responseString)
+                println(response)
                 return response
             }
         } catch (e: Exception) {

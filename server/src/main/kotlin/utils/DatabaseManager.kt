@@ -1,5 +1,6 @@
 package server.utils
 
+import server.State
 import shared.data.Country
 import shared.network.responses.Response
 import java.sql.Connection
@@ -70,8 +71,9 @@ object DatabaseManager {
                 )
             """.trimIndent())
             OutputManager.println("Таблица 'people' успешно создана / уже существует")
+            State.connectedToDatabase = true
         } catch (e: Exception) {
-            OutputManager.println("Ошибка соединения с базой данных")
+            OutputManager.println("Нет подключения к базе данных, переподключение через 1 сек")
         }
     }
 }

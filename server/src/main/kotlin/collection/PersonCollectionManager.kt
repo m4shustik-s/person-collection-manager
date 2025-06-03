@@ -9,10 +9,11 @@ import shared.data.Person
 import java.util.concurrent.ConcurrentHashMap
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.CopyOnWriteArrayList
 
 object PersonCollectionManager {
     private val collection = ConcurrentHashMap<String, Person>()
-    private val users = ArrayList<User>()
+    private val users = CopyOnWriteArrayList<User>()
     private val initializationDate: LocalDateTime = LocalDateTime.now()
 
     fun addPerson(key: String, person: Person): Boolean {
@@ -45,7 +46,7 @@ object PersonCollectionManager {
     }
 
     fun getAll(): Collection<Person> = collection.values
-    fun getAllUsers(): ArrayList<User> = users
+    fun getAllUsers(): CopyOnWriteArrayList<User> = users
 
     fun removeGreater(person: Person): List<Person> {
         val toRemove = collection.filterValues { it > person }.keys
@@ -87,15 +88,11 @@ object PersonCollectionManager {
     }
 
     fun loadCollection() {
-        try {
-            PersonEntity.getAll().forEach{(key, value) ->
-                collection[key] = value
-            }
-            UserEntity.getAll().forEach{(_, value) ->
-                users.add(value)
-            }
-        } catch (e: Exception) {
-            OutputManager.println(e.message.toString())
+        PersonEntity.getAll().forEach{(key, value) ->
+            collection[key] = value
+        }
+        UserEntity.getAll().forEach{(_, value) ->
+            users.add(value)
         }
     }
 }
