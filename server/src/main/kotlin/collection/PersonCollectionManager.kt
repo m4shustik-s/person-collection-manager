@@ -28,8 +28,9 @@ object PersonCollectionManager {
         return true
     }
 
-    fun removePerson(key: String): Person? {
-        return collection.remove(key)
+    fun removePerson(key: String, userId: Int): Person? {
+        if (collection[key]?.userId == userId) return collection.remove(key)
+        return null
     }
 
     fun clearCollection() {
@@ -47,29 +48,37 @@ object PersonCollectionManager {
     fun getAll(): ConcurrentHashMap<String, Person> = collection
     fun getAllUsers(): CopyOnWriteArrayList<User> = users
 
-    fun removeGreater(person: Person): List<Person> {
+    fun removeGreater(person: Person, userId: Int): List<Person> {
         val toRemove = collection.filterValues { it > person }.keys
         val removed = mutableListOf<Person>()
         for (key in toRemove) {
-            collection.remove(key)?.let { removed.add(it) }
+            val el = collection[key]
+            if (el != null && el.userId == userId) {
+                PersonEntity.delete(key)
+                removed.add(el)
+            }
         }
         return removed
     }
 
-    fun replaceIfLower(key: String, person: Person): Boolean {
+    fun replaceIfLower(key: String, person: Person, userId: Int): Boolean {
         val current = collection[key] ?: return false
-        if (person < current) {
-            collection[key] = person
+        if (person < current && current.userId == userId) {
+            PersonEntity.update(key, person)
             return true
         }
         return false
     }
 
-    fun removeLowerKey(key: String): List<Person> {
+    fun removeLowerKey(key: String, userId: Int): List<Person> {
         val toRemove = collection.keys.filter { it < key }
         val removed = mutableListOf<Person>()
         for (k in toRemove) {
-            collection.remove(k)?.let { removed.add(it) }
+            val el = collection[k]
+            if (el != null && el.userId == userId) {
+                PersonEntity.delete(k)
+                removed.add(el)
+            }
         }
         return removed
     }
@@ -87,6 +96,8 @@ object PersonCollectionManager {
     }
 
     fun loadCollection() {
+        collection.clear()
+        users.clear()
         PersonEntity.getAll().forEach{(key, value) ->
             collection[key] = value
         }

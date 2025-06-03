@@ -29,7 +29,8 @@ object UserEntity : Entity<User> {
         return null
     }
 
-    override fun delete(key: String?, id: Int) {
+    override fun delete(key: String?, id: Int?) {
+        if (id == null) return
         val stmt = connection.prepareStatement("DELETE FROM users WHERE id = ?")
         stmt.setInt(1, id)
         stmt.executeUpdate()

@@ -23,7 +23,7 @@ data class Person(
         require(passportID.isNotEmpty()) { "Passport ID cannot be empty" }
     }
 
-    override fun compareTo(other: Person): Int = id.compareTo(other.id)
+    override fun compareTo(other: Person): Int = passportID.compareTo(other.passportID)
 
     override fun toString(): String {
         return """

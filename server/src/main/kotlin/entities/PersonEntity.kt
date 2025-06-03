@@ -75,7 +75,7 @@ object PersonEntity : Entity<Person> {
         }
     }
 
-    override fun delete(key: String?, id: Int) {
+    override fun delete(key: String?, id: Int?) {
         if (key == null) return
         val stmt = connection.prepareStatement("DELETE FROM people WHERE key = ?")
         stmt.setString(1, key)
@@ -100,6 +100,13 @@ object PersonEntity : Entity<Person> {
     override fun getById(id: Int): Pair<String, Person>? {
         val stmt = connection.prepareStatement("SELECT * FROM people WHERE id = ?")
         stmt.setInt(1, id)
+        val rs = stmt.executeQuery()
+        return if (rs.next()) loadPersonFromDatabase(rs) else null
+    }
+
+    fun getByKey(key: String): Pair<String, Person>? {
+        val stmt = connection.prepareStatement("SELECT * FROM people WHERE key = ?")
+        stmt.setString(1, key)
         val rs = stmt.executeQuery()
         return if (rs.next()) loadPersonFromDatabase(rs) else null
     }
