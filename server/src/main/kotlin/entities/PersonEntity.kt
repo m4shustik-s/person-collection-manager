@@ -45,10 +45,9 @@ object PersonEntity : Entity<Person> {
     }
 
     override fun update(key: String?, entity: Person, userId: Int?): Int? {
-        if (userId == null || key == null) return null
+        if (userId == null) return null
         val stmt = connection.prepareStatement(
             """UPDATE people SET
-                    key = ?
                     id = ?,
                     name = ?,
                     coordinates_x = ?,
@@ -61,12 +60,13 @@ object PersonEntity : Entity<Person> {
                     location_x = ?,
                     location_y = ?,
                     location_z = ?,
-                    user_id = ?,
+                    user_id = ?
             WHERE id = ? RETURNING id""".trimIndent()
         )
         fillPlaceholders(stmt, null, entity, userId)
-        stmt.setInt(15, entity.id)
+        stmt.setInt(14, entity.id)
         try {
+            println(stmt.toString())
             val rs = stmt.executeQuery()
             return if (rs.next()) rs.getInt("id") else return null
         } catch (e: SQLException) {
@@ -124,7 +124,8 @@ object PersonEntity : Entity<Person> {
                     height = if (rs.getDouble("height") == 0.0) null else rs.getDouble("height"),
                     weight = if (rs.getDouble("weight") == 0.0) null else rs.getDouble("weight"),
                     passportID = rs.getString("passport_id"),
-                    nationality = Country.valueOf(rs.getString("nationality") ?: "")
+                    nationality = Country.valueOf(rs.getString("nationality") ?: ""),
+                    userId = rs.getInt("user_id")
                 )
             )
         } catch (e: Exception) {
@@ -133,27 +134,31 @@ object PersonEntity : Entity<Person> {
     }
 
     private fun fillPlaceholders(stmt: PreparedStatement, key: String?, entity: Person, userId: Int) {
-        stmt.setString(1, key)
-        stmt.setInt(2, entity.id)
-        stmt.setString(3, entity.name)
-        stmt.setLong(4, entity.coordinates.x)
-        stmt.setFloat(5, entity.coordinates.y)
-        stmt.setString(6, entity.creationDate)
-        if (entity.height == null) stmt.setNull(7, Types.DOUBLE)
-        else stmt.setDouble(7, entity.height)
-        if (entity.weight == null) stmt.setNull(8, Types.DOUBLE)
-        else stmt.setDouble(8, entity.weight)
-        stmt.setString(9, entity.passportID)
-        stmt.setString(10, entity.nationality.toString())
-        if (entity.location == null) {
-            stmt.setNull(11, Types.BIGINT)
-            stmt.setNull(12, Types.REAL)
-            stmt.setNull(13, Types.REAL)
-        } else {
-            stmt.setLong(11, entity.location.x)
-            stmt.setFloat(12, entity.location.y)
-            stmt.setFloat(13, entity.location.z)
+        var step = 1
+        if (key != null) {
+            stmt.setString(1, key)
+            step = 0
         }
-        stmt.setInt(14, userId)
+        stmt.setInt(2 - step, entity.id)
+        stmt.setString(3 - step, entity.name)
+        stmt.setLong(4 - step, entity.coordinates.x)
+        stmt.setFloat(5 - step, entity.coordinates.y)
+        stmt.setString(6 - step, entity.creationDate)
+        if (entity.height == null) stmt.setNull(7 - step, Types.DOUBLE)
+        else stmt.setDouble(7 - step, entity.height)
+        if (entity.weight == null) stmt.setNull(8 - step, Types.DOUBLE)
+        else stmt.setDouble(8 - step, entity.weight)
+        stmt.setString(9 - step, entity.passportID)
+        stmt.setString(10 - step, entity.nationality.toString())
+        if (entity.location == null) {
+            stmt.setNull(11 - step, Types.BIGINT)
+            stmt.setNull(12 - step, Types.REAL)
+            stmt.setNull(13 - step, Types.REAL)
+        } else {
+            stmt.setLong(11 - step, entity.location.x)
+            stmt.setFloat(12 - step, entity.location.y)
+            stmt.setFloat(13 - step, entity.location.z)
+        }
+        stmt.setInt(14 - step, userId)
     }
 }

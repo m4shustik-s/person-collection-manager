@@ -38,6 +38,7 @@ class Server(private val port: Int) {
                             handleClient(clientSocket)
                         } catch (e: Exception) {
                             OutputManager.println("Error handling client: ${e.message}")
+                            clientSocket.close()
                         }
                     }
                 } catch (e: IOException) {
@@ -106,7 +107,6 @@ class Server(private val port: Int) {
             OutputManager.println("Error sending response: ${e.message}")
         } finally {
             try {
-                println("kek")
                 clientSocket.close()
                 OutputManager.println("Connection closed")
             } catch (e: IOException) {
