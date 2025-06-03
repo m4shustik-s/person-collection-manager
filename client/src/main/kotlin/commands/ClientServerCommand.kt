@@ -1,8 +1,8 @@
 package client.commands
 
 import client.State
+import client.State.json
 import client.ui.OutputManager
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import network.NetworkManager
@@ -15,11 +15,14 @@ class ClientServerCommand(
     private val argType: Pair<String?, String?>
 ) : Command {
     override fun execute(args: List<String?>) {
-        NetworkManager.sendRequest(Request("PING"))
-        if (!State.connectedToServer) return
-        val json = Json { ignoreUnknownKeys = true}
+        NetworkManager.healthCheck()
+        while (!State.connectedToServer) InputManager.needToReconnect()
+        if (!State.isAuthorized) InputManager.getAuthCredentials("Пользователь не авторизован")
         val data: Any?
-        val params: MutableMap<String, JsonElement> = mutableMapOf()
+        val params: MutableMap<String, JsonElement> = mutableMapOf(
+            "login" to json.encodeToJsonElement(State.login),
+            "password" to json.encodeToJsonElement(State.password)
+        )
         var key: Any? = null
         when (argType.first) {
             "String" -> {

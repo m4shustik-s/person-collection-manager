@@ -12,7 +12,8 @@ data class Person(
     val weight: Double?,
     val passportID: String,
     val nationality: Country,
-    val location: Location?
+    val location: Location?,
+    var userId: Int = -1
 ) : Comparable<Person> {
     init {
         require(id > 0) { "ID must be greater than 0" }

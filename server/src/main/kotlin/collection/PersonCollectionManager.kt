@@ -1,16 +1,18 @@
 package server.collection
 
-import server.utils.FileManager
+import server.entities.PersonEntity
+import server.entities.UserEntity
+import server.shared.data.User
+import server.utils.OutputManager
 import shared.data.Location
 import shared.data.Person
-import java.nio.file.Paths
 import java.util.concurrent.ConcurrentHashMap
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 object PersonCollectionManager {
     private val collection = ConcurrentHashMap<String, Person>()
-    private var currentFilePath: String? = null
+    private val users = ArrayList<User>()
     private val initializationDate: LocalDateTime = LocalDateTime.now()
 
     fun addPerson(key: String, person: Person): Boolean {
@@ -43,6 +45,7 @@ object PersonCollectionManager {
     }
 
     fun getAll(): Collection<Person> = collection.values
+    fun getAllUsers(): ArrayList<User> = users
 
     fun removeGreater(person: Person): List<Person> {
         val toRemove = collection.filterValues { it > person }.keys
@@ -83,32 +86,16 @@ object PersonCollectionManager {
         return collection.values.map { it.passportID }.sortedDescending()
     }
 
-    fun saveCollection(): Boolean {
-        return currentFilePath?.let { filePath ->
-            FileManager.writeCollection(filePath, collection.toMap()) // Явное преобразование
-        } ?: false
-    }
-
-    fun loadCollection(filePath: String): Boolean {
-        return try {
-            val normalizedPath = Paths.get(filePath).normalize().toString()
-            val data = FileManager.readCollection(normalizedPath) ?: return false
-
-            collection.clear()
-            Person.generateId(data.keys)
-            data.forEach { (key, person) -> collection[key.toString()] = person }
-            currentFilePath = normalizedPath
-            true
+    fun loadCollection() {
+        try {
+            PersonEntity.getAll().forEach{(key, value) ->
+                collection[key] = value
+            }
+            UserEntity.getAll().forEach{(_, value) ->
+                users.add(value)
+            }
         } catch (e: Exception) {
-            false
+            OutputManager.println(e.message.toString())
         }
-    }
-
-    fun getCurrentFile(): String? {
-        return currentFilePath
-    }
-
-    fun setCurrentFile(filePath: String) {
-        currentFilePath = filePath
     }
 }

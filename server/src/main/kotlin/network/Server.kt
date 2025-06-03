@@ -98,12 +98,16 @@ class Server(private val port: Int) {
     }
 
     private fun handleRequest(request: Request): Response? {
-        val key = request.args["key"]?.jsonPrimitive?.contentOrNull
         val res =  Invoker.executeCommand(
             commandName = request.command,
-            args = listOf(key, request.args["data"])
+            args = listOf(
+                request.args["key"]?.jsonPrimitive?.contentOrNull,
+                request.args["data"],
+                request.args["login"]?.jsonPrimitive?.contentOrNull,
+                request.args["password"]?.jsonPrimitive?.contentOrNull
+            )
         )
-        PersonCollectionManager.saveCollection()
+        PersonCollectionManager.loadCollection()
         return res
     }
 

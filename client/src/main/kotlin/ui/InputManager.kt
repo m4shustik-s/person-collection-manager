@@ -120,7 +120,7 @@ object InputManager {
             val input = readlnOrNull()
             when (input?.trim()) {
                 "Y" -> {
-                    NetworkManager.sendRequest(Request("PING"))
+                    NetworkManager.healthCheck()
                     break
                 }
                 "n" -> {
@@ -129,6 +129,25 @@ object InputManager {
                 }
             }
         }
+    }
+
+    fun getAuthCredentials(msg: String? = null) {
+        State.login = null
+        State.password = null
+        while (State.login.isNullOrBlank() || State.password.isNullOrBlank()) {
+            if (msg != null) OutputManager.println(msg)
+            if (State.login.isNullOrBlank()) {
+                OutputManager.println("Введите Ваш логин:")
+                OutputManager.print("> ")
+                State.login = readlnOrNull()
+            }
+            if (State.password.isNullOrBlank()) {
+                OutputManager.println("Введите Ваш пароль:")
+                OutputManager.print("> ")
+                State.password = readlnOrNull()
+            }
+        }
+        NetworkManager.healthCheck()
     }
 
     fun readLocation(): Location? {

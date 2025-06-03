@@ -1,7 +1,8 @@
 package server
-
 import server.collection.PersonCollectionManager
 import server.network.Server
+import server.utils.DatabaseManager
+
 object State {
     var isRunning = false
 }
@@ -9,8 +10,8 @@ object State {
 fun main() {
     val port = 8888
     State.isRunning = true
-    PersonCollectionManager.setCurrentFile("default_collection.json")
-    PersonCollectionManager.loadCollection("default_collection.json")
+    DatabaseManager.setUp()
+    PersonCollectionManager.loadCollection()
     val server = Server(port)
     server.start()
 }
