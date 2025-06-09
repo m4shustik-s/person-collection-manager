@@ -12,23 +12,43 @@ import shared.utils.Serialization
 import java.io.*
 import java.net.ServerSocket
 import java.net.Socket
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import java.util.concurrent.ForkJoinPool
+import java.net.SocketTimeoutException
+import java.util.concurrent.*
 
 class Server(private val port: Int) {
-    private val requestPool = ForkJoinPool()
+    private val requestPool: ExecutorService = createBoundedThreadPool(50, 500)
     private val responsePool: ExecutorService = Executors.newCachedThreadPool()
 
-    fun start() {
+    // Map to hold per-socket locks for synchronizing response writes
+    private val socketLocks = ConcurrentHashMap<Socket, Any>()
 
+    private fun createBoundedThreadPool(corePoolSize: Int, maxQueueSize: Int): ExecutorService {
+        return ThreadPoolExecutor(
+            corePoolSize,
+            corePoolSize * 2,
+            60L,
+            TimeUnit.SECONDS,
+            LinkedBlockingQueue(maxQueueSize)
+        ) { r, executor ->
+            OutputManager.println("Task rejected, queue full. Waiting for space...")
+            try {
+                executor.queue.put(r) // Blocking put
+            } catch (e: InterruptedException) {
+                Thread.currentThread().interrupt()
+                OutputManager.println("Interrupted while waiting to enqueue: ${e.message}")
+            }
+        }.apply {
+            allowCoreThreadTimeOut(true)
+        }
+    }
+
+    fun start() {
         ServerSocket(port).use { serverSocket ->
             OutputManager.println("Server started on port $port")
             while (State.isRunning) {
                 try {
                     val clientSocket = serverSocket.accept().apply {
-                        soTimeout = 30000 // 30-second timeout for client operations
-                        keepAlive = true  // Enable TCP keep-alive
+                        soTimeout = 30000
                     }
 
                     OutputManager.println("New client connected: ${clientSocket.inetAddress.hostAddress}")
@@ -38,9 +58,15 @@ class Server(private val port: Int) {
                             handleClient(clientSocket)
                         } catch (e: Exception) {
                             OutputManager.println("Error handling client: ${e.message}")
-                            clientSocket.close()
+                            try {
+                                clientSocket.close()
+                            } catch (ex: IOException) {
+                                OutputManager.println("Error closing socket: ${ex.message}")
+                            }
                         }
                     }
+                } catch (e: SocketTimeoutException) {
+                    // Accept timeout is normal; continue to check State.isRunning
                 } catch (e: IOException) {
                     OutputManager.println("Error accepting client connection: ${e.message}")
                 }
@@ -48,42 +74,72 @@ class Server(private val port: Int) {
         }
     }
 
-
     private fun handleClient(clientSocket: Socket) {
-        val input = DataInputStream(clientSocket.getInputStream())
-
+        var input: DataInputStream? = null
         try {
-            // Читаем длину сообщения
-            val length = try {
-                input.readInt()
-            } catch (e: EOFException) {
-                OutputManager.println("Client disconnected (graceful close)")
-                clientSocket.close()
-                return
-            }
+            input = DataInputStream(clientSocket.getInputStream())
+            clientSocket.soTimeout = 30000
 
-            // Читаем данные
-            val bytes = ByteArray(length)
-            input.readFully(bytes)
-            val requestJson = bytes.decodeToString()
-            val request = Serialization.decodeFromString<Request>(requestJson)
-            val response = if (request?.command == "PING") {
-                Response(true, "PONG")
-            } else {
-                request?.let { handleRequest(it) }
-            }
-            responsePool.submit {
-                handleResponse(clientSocket, response)
+            while (true) {
+                val length = try {
+                    input.readInt()
+                } catch (e: EOFException) {
+                    OutputManager.println("Client disconnected (graceful close): ${clientSocket.inetAddress.hostAddress}")
+                    break
+                } catch (e: SocketTimeoutException) {
+                    OutputManager.println("Socket read timed out: ${clientSocket.inetAddress.hostAddress}")
+                    break
+                }
+
+                val bytes = ByteArray(length)
+                input.readFully(bytes)
+
+                val requestJson = bytes.decodeToString()
+                val request: Request? = Serialization.decodeFromString(requestJson)
+
+                val response = when {
+                    request == null -> {
+                        OutputManager.println("Received null request from ${clientSocket.inetAddress.hostAddress}")
+                        Response(false, "Invalid request")
+                    }
+                    request.command == "PING" -> {
+                        Response(true, "PONG")
+                    }
+                    else -> {
+                        handleRequest(request)
+                    }
+                }
+
+                // Submit response sending to the responsePool asynchronously
+                responsePool.submit {
+                    try {
+                        handleResponse(clientSocket, response)
+                    } catch (e: IOException) {
+                        OutputManager.println("Error sending response: ${e.message}")
+                        try {
+                            clientSocket.close()
+                        } catch (ex: IOException) {
+                            OutputManager.println("Error closing socket after response failure: ${ex.message}")
+                        }
+                    }
+                }
             }
         } catch (e: SocketException) {
             OutputManager.println("Socket error (client force-closed?): ${e.message}")
-        } catch (e: IOException) {
-            OutputManager.println("Error closing socket: ${e.message}")
+        } finally {
+            try {
+                input?.close()
+                clientSocket.close()
+                socketLocks.remove(clientSocket) // Clean up lock to avoid memory leak
+                OutputManager.println("Connection closed: ${clientSocket.inetAddress.hostAddress}")
+            } catch (e: IOException) {
+                OutputManager.println("Error closing socket: ${e.message}")
+            }
         }
     }
 
     private fun handleRequest(request: Request): Response? {
-        val res =  Invoker.executeCommand(
+        val res = Invoker.executeCommand(
             commandName = request.command,
             args = listOf(
                 request.args["key"]?.jsonPrimitive?.contentOrNull,
@@ -97,20 +153,13 @@ class Server(private val port: Int) {
     }
 
     private fun handleResponse(clientSocket: Socket, response: Response?) {
-        try {
-            val output = DataOutputStream(clientSocket.getOutputStream())
-            val responseBytes = Serialization.encodeToString(response).toByteArray()
-            output.writeInt(responseBytes.size)
-            output.write(responseBytes)
-            output.flush()
-        } catch (e: IOException) {
-            OutputManager.println("Error sending response: ${e.message}")
-        } finally {
-            try {
-                clientSocket.close()
-                OutputManager.println("Connection closed")
-            } catch (e: IOException) {
-                OutputManager.println("Error closing socket: ${e.message}")
+        val lock = socketLocks.computeIfAbsent(clientSocket) { Any() }
+        synchronized(lock) {
+            DataOutputStream(clientSocket.getOutputStream()).use { output ->
+                val responseBytes = Serialization.encodeToString(response).toByteArray()
+                output.writeInt(responseBytes.size)
+                output.write(responseBytes)
+                output.flush()
             }
         }
     }

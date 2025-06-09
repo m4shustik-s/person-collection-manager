@@ -6,7 +6,7 @@ import java.sql.Connection
 import java.sql.DriverManager
 
 object DatabaseManager {
-    private val db_host = "192.168.0.29"
+    private val db_host = "192.168.1.101"
     private val db_port = 5432
     private val db_name = "postgres"
     private val db_user = "goida"

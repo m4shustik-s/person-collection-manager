@@ -1,6 +1,7 @@
 package server.commands
 
 import server.collection.PersonCollectionManager
+import server.entities.PersonEntity
 import shared.network.responses.Response
 
 class RemoveLowerKeyCommand : ServerCommand {
@@ -8,9 +9,16 @@ class RemoveLowerKeyCommand : ServerCommand {
         val user = PersonCollectionManager.getAllUsers().find { user -> user.login == args[2] }
         if (user != null) {
             val key = args[0] ?: return Response(false, "Ключ не может быть null")
-            val removed = PersonCollectionManager.removeLowerKey(args[0] as String, user.id!!)
-            return if (removed.isNotEmpty()) Response(true, "Удалено ${removed.size} элементов с ключами меньше $key")
-            else Response(true, "Не найдено элементов с ключами меньше $key")
+            val existedPerson = PersonEntity.getById((args[0] as String).toInt())
+            val owner = PersonCollectionManager.getAllUsers().find { us ->
+                us.id == existedPerson?.second?.userId
+            }
+            if (owner?.login == args[2]) {
+                val removed = PersonCollectionManager.removeLowerKey(args[0] as String, user.id!!)
+                return if (removed.isNotEmpty()) Response(true, "Удалено ${removed.size} элементов с ключами меньше $key")
+                else Response(true, "Не найдено элементов с ключами меньше $key")
+            }
+            return Response(true, "Только владелец может изменять свой объект")
         }
         return Response(false, "Пользователь не авторизован")
     }

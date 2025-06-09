@@ -40,14 +40,11 @@ object NetworkManager {
                 readFully(channel, responseBuffer)
                 responseBuffer.flip()
 
-                // Получаем байты из ByteBuffer
                 val byteArray = ByteArray(responseBuffer.remaining())
                 responseBuffer.get(byteArray)
 
-                // Преобразуем байты в строку
                 val responseString = byteArray.decodeToString()
 
-                // Десериализуем JSON в объект Response
                 val response = Serialization.decodeFromString<Response>(responseString)
                 return response
             }
